@@ -44,25 +44,36 @@ def download_latest_artifact(project_url, download_dir):
     job_id, version = get_last_successful_build(account, project)
 
     artifacts_url = f"{API_BASE}/buildjobs/{job_id}/artifacts"
-    artifacts = requests.get(artifacts_url).json()
+    r = requests.get(artifacts_url)
+    r.raise_for_status()
+    artifacts = r.json()
 
     if not artifacts:
         raise RuntimeError("No artifacts found in successful build")
 
     artifact_name = artifacts[0]["fileName"]
 
-    download_url = (
-        f"{API_BASE}/buildjobs/{job_id}/artifacts/{artifact_name}"
-    )
+    download_url = f"{API_BASE}/buildjobs/{job_id}/artifacts/{artifact_name}"
 
-    r = requests.get(download_url)
+    r = requests.get(download_url, stream=True)
     r.raise_for_status()
 
     os.makedirs(download_dir, exist_ok=True)
     out_path = os.path.join(download_dir, artifact_name)
 
+    size = 0
     with open(out_path, "wb") as f:
-        f.write(r.content)
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+                size += len(chunk)
 
-    return out_path, version
+    return {
+        "path": out_path,
+        "version": version,
+        "artifact": artifact_name,
+        "bytes": size,
+        "job_id": job_id,
+    }
+
 

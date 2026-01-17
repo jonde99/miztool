@@ -13,7 +13,7 @@ from PySide6.QtGui import QIcon
 
 from config import load_config, save_config
 from appveyor import download_latest_artifact, parse_project_url, get_last_successful_build
-from git_ops import git_pull, git_status, git_commit_push
+from git_ops import git_pull, git_status, git_push, git_commit
 from miz_ops import extract_miz
 
 
@@ -153,14 +153,24 @@ class MainWindow(QMainWindow):
         openrepo_group.setLayout(openrepo_layout)
         layout.addWidget(openrepo_group)
 
-
         # ---------------- Frame 4: Commit & Push ----------------
         commit_group = QGroupBox("Step 6 Commit Updates and Push")
         commit_layout = QVBoxLayout()
 
-        commit_btn = QPushButton("Commit & Push")
-        commit_btn.clicked.connect(self.git_commit_push_action)
-        commit_layout.addWidget(commit_btn)
+        # Commit message input
+        self.commit_message_edit = QLineEdit()
+        self.commit_message_edit.setPlaceholderText("Commit message (required)")
+        commit_layout.addWidget(self.commit_message_edit)
+
+        row5 = QHBoxLayout()
+        commit_btn = QPushButton("Commit")
+        commit_btn.clicked.connect(self.git_commit_action)
+        push_btn = QPushButton("Push")
+        push_btn.clicked.connect(self.git_push_action)
+
+        row5.addWidget(commit_btn)
+        row5.addWidget(push_btn)
+        commit_layout.addLayout(row5)
 
         commit_group.setLayout(commit_layout)
         layout.addWidget(commit_group)
@@ -386,18 +396,28 @@ class MainWindow(QMainWindow):
 
     def download_action(self):
         try:
-            path, version = download_latest_artifact(
+            # Notify user immediately
+            self.output_window.append("[Download] Downloading...")
+            QApplication.processEvents()   # force UI update
+
+            result = download_latest_artifact(
                 self.cfg["miz"]["miz_url"],
                 self.cfg["miz"]["miz_path"]
             )
-#            QMessageBox.information(self, "Downloaded", f"Downloaded: {os.path.basename(path)}")
-            self.output_window.append("[Download] Complete")
+
+            self.output_window.append(
+                "[Download] Completed\n"
+                f"  Version   : {result['version']}\n"
+                f"  Artifact  : {result['artifact']}\n"
+                f"  Job ID    : {result['job_id']}\n"
+                f"  Size      : {result['bytes']} bytes\n"
+                f"  Saved to  : {result['path']}\n"
+            )
+
             self.update_versions()
 
         except Exception as e:
-#            QMessageBox.critical(self, "Error", str(e))
-            self.output_window.append(f"[Download Error] {e}")
-
+            self.output_window.append(f"[Download Error] {e}\n")
 
     def extract_action(self):
         try:
@@ -406,18 +426,31 @@ class MainWindow(QMainWindow):
                 self.output_window.append("[MIZ Extract] No .miz file found.\n")
                 return
 
-            # miz_path = os.path.join(self.cfg["miz"]["miz_path"], latest)
             override = self.override_miz_edit.text().strip()
-            if override:
-                miz_path = override
-            else:
-                miz_path = os.path.join(self.cfg["miz"]["miz_path"], latest)
+            miz_path = override if override else os.path.join(self.cfg["miz"]["miz_path"], latest)
 
-            extract_miz(miz_path, self.cfg["git"]["repo_path"])
-            self.output_window.append(f"[MIZ Extract] Extracted {latest} into repo.\n")
+            extracted, overwritten = extract_miz(
+                miz_path,
+                self.cfg["git"]["repo_path"]
+            )
+
+            self.output_window.append(
+                "[MIZ Extract]\n"
+                f"  Source: {miz_path}\n"
+                f"  New files: {len(extracted)}\n"
+                f"  Overwritten: {len(overwritten)}\n"
+            )
+
+            for f in overwritten:
+                self.output_window.append(f"  OVERWRITE: {f}")
+            for f in extracted:
+                self.output_window.append(f"  ADD:       {f}")
+
+            self.output_window.append("")
 
         except Exception as e:
             self.output_window.append(f"[MIZ Extract Error] {e}\n")
+
 
     def git_pull_action(self):
         repo_path = self.cfg["git"]["repo_path"]
@@ -472,12 +505,33 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.output_window.append(f"[Git Status Error] {e}\n")
 
-    def git_commit_push_action(self):
+    def git_commit_action(self):
+        message = self.commit_message_edit.text().strip()
+
+        if not message:
+            self.output_window.append(
+                "[Git Commit Error] Commit message is required.\n"
+            )
+            return
+
         try:
-            output = git_commit_push(self.cfg["git"]["repo_path"], "Automated update")
-            self.output_window.append(f"[Commit & Push]\n{output}\n")
+            output = git_commit(
+                self.cfg["git"]["repo_path"],
+                message
+            )
+            self.output_window.append(f"[Git Commit]\n{output}\n")
+            self.commit_message_edit.clear()
         except Exception as e:
-            self.output_window.append(f"[Commit Error] {e}\n")
+            self.output_window.append(f"[Git Commit Error] {e}\n")
+
+
+    def git_push_action(self):
+        try:
+            output = git_push(self.cfg["git"]["repo_path"])
+            self.output_window.append(f"[Git Push]\n{output}\n")
+        except Exception as e:
+            self.output_window.append(f"[Git Push Error] {e}\n")
+
 
     # ---------------------------------------------------------
     # CONFIG SAVE + PATH PICKER
