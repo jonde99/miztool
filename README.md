@@ -1,26 +1,26 @@
 # 132nd MIZ file compiler
 Replaces EMFT which stopped working. 
 
-Download Zip. 
-https://github.com/jonde99/miztool/main/miztool.zip
+You need git.  
+https://github.com/git-guides/install-git  
 
-Self Container file manipulator
+What it does... 
 
-1. Pull latest MIZ from Appveyor. 
-2. Pull latest repo from github. 
-3. Edit miz file. 
-4. re-order miz file. (just unzips the updated miz to the local repo)
-5. Edit script files as needed
-6. push back to github. 
+1. It pulls latest MIZ from Appveyor. 
+2. It pull latest mission repo from github.
+   
+   Manually edit miz file. Either save it or save-as a new name. 
+  
+3. It will re-order miz file. (just unzips the updated miz to the local repo)
+
+   You then edit any script files or assets as needed in the repo.
+
+4. It will push the update back to github. 
 
 Appveyor does the rest. 
 
-# Building
 
-python 3.12+
-requirements
-pyinstaller to compile. 
-
+# Compileed with pyinstaller. 
 ```
 pyinstaller --onefile --noconsole --strip --icon=assets/icon.ico --add-data "assets/icon.ico;assets" app.py
 ```
