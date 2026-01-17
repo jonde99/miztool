@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 settings.json
+miztool.zip
+miztool.exe
 
 # Virtual environments
 venv/
