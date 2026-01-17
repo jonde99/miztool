@@ -1,4 +1,4 @@
-# 132nd MIZ file compiler
+# DCS MIZ File Tool
 Replaces EMFT which stopped working. 
 
 You need git.  
