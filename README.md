@@ -22,6 +22,6 @@ requirements
 pyinstaller to compile. 
 
 ```
-pyinstaller --onefile --noconsole --strip --icon=assets/icon.ico --add-data "assets/icon.ico;assets" miztool.py
+pyinstaller --onefile --noconsole --strip --icon=assets/icon.ico --add-data "assets/icon.ico;assets" app.py
 ```
 
