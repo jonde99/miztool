@@ -2,7 +2,7 @@
 Replaces EMFT which stopped working. 
 
 Download Zip. 
-https://github.com/jonde99/miztool/blob/main/miztool.zip
+https://github.com/jonde99/miztool/main/miztool.zip
 
 Self Container file manipulator
 
