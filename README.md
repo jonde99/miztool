@@ -1,13 +1,13 @@
 # DCS MIZ File Tool
-Replaces EMFT which stopped working. 
+ALternative to EMFT which stopped working for me. 
 
 You need git.  
 https://github.com/git-guides/install-git  
 
 What it does... 
 
-1. It pulls latest MIZ from Appveyor. 
-2. It pull latest mission repo from github.
+1. It pulls latest 132 mission MIZ from Appveyor. 
+2. It pull latest 132 mission repo from github.
    
    Manually edit miz file. Either save it or save-as a new name. 
   
